@@ -1,12 +1,12 @@
 const palabrasReglas = [
-  { palabra: "Fácil", regla: "Esdrújula: lleva tilde en la antepenúltima sílaba." },
+  { palabra: "Máquina", regla: "Esdrújula: lleva tilde en la antepenúltima sílaba." },
   { palabra: "Camión", regla: "Aguda: lleva tilde porque termina en N, S o vocal." },
-  { palabra: "Lápiz", regla: "Llana: lleva tilde porque no termina en N, S o vocal." },
+  { palabra: "Lápiz", regla: "Grave: lleva tilde porque no termina en N, S o vocal." },
   { palabra: "Corazón", regla: "Aguda: lleva tilde porque termina en N, S o vocal." },
-  { palabra: "Árbol", regla: "Llana: lleva tilde porque no termina en N, S o vocal." },
+  { palabra: "Árbol", regla: "Grave: lleva tilde porque no termina en N, S o vocal." },
   { palabra: "Música", regla: "Esdrújula: siempre lleva tilde." },
   { palabra: "Compás", regla: "Aguda: lleva tilde porque termina en S." },
-  { palabra: "Difícil", regla: "Llana: lleva tilde porque no termina en N, S o vocal." },
+  { palabra: "Difícil", regla: "Grave: lleva tilde porque no termina en N, S o vocal." },
   { palabra: "Número", regla: "Esdrújula: siempre lleva tilde." },
   { palabra: "Café", regla: "Aguda: lleva tilde porque termina en vocal." },
   { palabra: "Rápido", regla: "Esdrújula: siempre lleva tilde." },
@@ -17,6 +17,11 @@ let score = 0;
 const scoreDisplay = document.getElementById("score");
 const board = document.getElementById("game-board");
 const restartBtn = document.getElementById("restart-btn");
+const pairsSelect = document.getElementById('pairs-select');
+const soundToggle = document.getElementById('sound-toggle');
+const winModal = document.getElementById('win-modal');
+const playAgainBtn = document.getElementById('play-again');
+const closeModalBtn = document.getElementById('close-modal');
 
 // --- WebAudio: generador de sonidos (no se requieren archivos externos) ---
 const AudioCtx = window.AudioContext || window.webkitAudioContext;
@@ -85,7 +90,8 @@ function playFinal() { playTone(660, 0.5, 'triangle', 0.16); }
 // Iniciar fondo tras la primera interacción del usuario (evita bloqueos de autoplay)
 function activarAudioConInteraccion() {
   const once = () => {
-    startBackground();
+    // solo arrancar fondo si el sonido está activado
+    if (!soundToggle || soundToggle.getAttribute('aria-pressed') === 'true') startBackground();
     window.removeEventListener('click', once);
     window.removeEventListener('keydown', once);
   };
@@ -99,8 +105,8 @@ function iniciarJuego() {
   score = 0;
   scoreDisplay.textContent = score;
 
-  // Elegir pares aleatorios
-  const NUM_PARES = 5; // mantiene 5 pares como antes
+  // Elegir pares aleatorios según selector
+  const NUM_PARES = (pairsSelect && parseInt(pairsSelect.value, 10)) || 5;
   const seleccion = palabrasReglas.slice().sort(() => 0.5 - Math.random()).slice(0, NUM_PARES);
 
   // Construir cartas con pairId para emparejado robusto
@@ -170,9 +176,10 @@ function voltearCarta(card, data) {
     matchesFound++;
     score++;
     scoreDisplay.textContent = score;
-    if (matchesFound === 5) {
+    const target = (pairsSelect && parseInt(pairsSelect.value,10)) || 5;
+    if (matchesFound === target) {
       try { playFinal(); } catch(e){}
-      setTimeout(() => alert("🎉 ¡Felicidades! Has encontrado todas las parejas."), 200);
+      setTimeout(() => showWinModal(), 200);
     }
   } else {
     // fallo
@@ -195,7 +202,49 @@ restartBtn.addEventListener("click", () => {
   matchesFound = 0;
   iniciarJuego();
   // intentar reactivar fondo tras reinicio
-  startBackground();
+  if (!soundToggle || soundToggle.getAttribute('aria-pressed') === 'true') startBackground();
+});
+
+// Sound toggle
+if (soundToggle) {
+  soundToggle.addEventListener('click', () => {
+    const pressed = soundToggle.getAttribute('aria-pressed') === 'true';
+    if (pressed) {
+      // apagar sonido
+      soundToggle.setAttribute('aria-pressed','false');
+      soundToggle.textContent = '🔈 Sin sonido';
+      stopBackground();
+    } else {
+      soundToggle.setAttribute('aria-pressed','true');
+      soundToggle.textContent = '🔊 Sonido';
+      startBackground();
+    }
+  });
+}
+
+// Modal handling
+function showWinModal() {
+  if (!winModal) { alert('🎉 ¡Felicidades! Has encontrado todas las parejas.'); return; }
+  winModal.setAttribute('aria-hidden','false');
+  // focus en botón de jugar de nuevo
+  setTimeout(() => playAgainBtn && playAgainBtn.focus(), 100);
+}
+function closeWinModal() {
+  if (!winModal) return;
+  winModal.setAttribute('aria-hidden','true');
+}
+
+if (playAgainBtn) playAgainBtn.addEventListener('click', () => {
+  closeWinModal();
+  restartBtn.click();
+});
+if (closeModalBtn) closeModalBtn.addEventListener('click', closeWinModal);
+
+// cerrar modal con Escape
+window.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && winModal && winModal.getAttribute('aria-hidden') === 'false') {
+    closeWinModal();
+  }
 });
 
 window.addEventListener('load', iniciarJuego);
