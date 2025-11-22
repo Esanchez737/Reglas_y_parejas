@@ -8,12 +8,40 @@
 </head>
 <body>
   <div class="game-container">
-    <h1>🎯 Reglas y Parejas</h1>
-    <div class="score">Puntuación: <span id="score">0</span></div>
-    <div id="game-board" class="board"></div>
-    <button id="restart-btn">Reiniciar</button>
+    <header class="game-header">
+      <h1>🎯 Reglas y Parejas</h1>
+      <div class="controls">
+        <label for="pairs-select">Número de pares:</label>
+        <select id="pairs-select" aria-label="Número de pares">
+          <option value="3">3</option>
+          <option value="4">4</option>
+          <option value="5" selected>5</option>
+          <option value="6">6</option>
+        </select>
+
+        <button id="sound-toggle" aria-pressed="true">🔊 Sonido</button>
+      </div>
+      <div class="score">Puntuación: <span id="score">0</span></div>
+    </header>
+
+    <div id="game-board" class="board" aria-live="polite"></div>
+    <div class="actions">
+      <button id="restart-btn">Reiniciar</button>
+    </div>
   </div>
 
   <script src="script.js"></script>
+
+  <!-- Modal de victoria -->
+  <div id="win-modal" class="modal" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="modal-content">
+      <h2 id="win-title">¡Felicidades!</h2>
+      <p id="win-message">Has encontrado todas las parejas.</p>
+      <div class="modal-actions">
+        <button id="play-again">Jugar otra vez</button>
+        <button id="close-modal">Cerrar</button>
+      </div>
+    </div>
+  </div>
 </body>
 </html>
